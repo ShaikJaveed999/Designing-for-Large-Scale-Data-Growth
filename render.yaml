@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: trackflow-api
+    runtime: node
+    rootDir: Milestone 03/challenge 3.14
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PRIMARY_DB_URL
+        sync: false
+      - key: REPLICA_DB_URL
+        sync: false
+
+  - type: cron
+    name: trackflow-nightly-maintenance
+    runtime: node
+    rootDir: Milestone 03/challenge 3.14
+    schedule: "0 2 * * *"
+    buildCommand: npm install
+    startCommand: npm run maintenance
+    envVars:
+      - key: PRIMARY_DB_URL
+        sync: false
+      - key: REPLICA_DB_URL
+        sync: false
