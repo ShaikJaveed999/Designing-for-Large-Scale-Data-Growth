@@ -2,6 +2,12 @@
 
 TrackFlow is an event-tracking and analytics API built with Express and PostgreSQL. It records user events, manages sessions and feature usage, reports event-type metrics, and keeps older raw events queryable through an archive. Its event store uses monthly PostgreSQL range partitions, and database reads can be routed to a read replica.
 
+## Architecture and growth
+
+The schema contains `users`, `sessions`, partitioned `events`, `events_archive`, and `feature_usage`. With 50,000 users × 200 events/day, the workload is 10 million events per day. Including the supplied 45 million starting rows and assuming a constant rate with 365 days/year, total raw events project to 3.695B, 7.345B, and 10.995B after 12, 24, and 36 months. After 90-day retention stabilizes, active events approach 900M rows while older events accumulate in the archive. Session and feature-usage projections require separate assumptions because their rates are not supplied. See [GROWTH-ANALYSIS.md](./GROWTH-ANALYSIS.md) for table-by-table estimates and unmeasured latency risks.
+
+The architecture uses UTC monthly range partitioning for event-time pruning; a transactional nightly archive for events older than 90 days; and primary/replica routing for writes and eligible reads. The replica is eventually consistent, with a primary-read header for read-after-write cases. See [SCALE-PLAN.md](./SCALE-PLAN.md) for implementation order and operational trade-offs.
+
 ## Technologies
 
 - Node.js 18 or later
@@ -86,12 +92,13 @@ Run the automated test suite with:
 npm test
 ```
 
-The tests exercise read/write pool routing, primary fallback and same-URL behavior, route-level consistency selection, archive transaction handling, and schema/deployment configuration contracts. Embedded PostgreSQL (PGlite) integration tests execute the schema and migration, verify partition pruning and event insertion, exercise API event creation/read, and test archival rollback and duplicate handling. PGlite is for automated testing; production still requires PostgreSQL 14 or later.
+The tests exercise read/write pool routing, primary fallback and same-URL behavior, route-level consistency selection, archive transaction handling, and schema/deployment configuration contracts. The latest run reported **17 passed, 0 failed**. Embedded PostgreSQL (PGlite) integration tests execute the schema and migration, verify partition pruning and event insertion, exercise API event creation/read, and test archival rollback and duplicate handling. PGlite is for automated testing; its empty-partition plan timings are not production benchmarks. Production still requires PostgreSQL 14 or later.
 
 ## Scale documentation
 
 - [GROWTH-ANALYSIS.md](./GROWTH-ANALYSIS.md) — workload assumptions, 12/24/36-month projections, existing query risks, and estimates.
 - [SCALE-PLAN.md](./SCALE-PLAN.md) — strategy summary, implementation order, and operational trade-offs.
+- [VIDEO-WALKTHROUGH-SCRIPT.md](./VIDEO-WALKTHROUGH-SCRIPT.md) — 2–3 minute recording script. No video has been recorded or uploaded.
 
 ## Deployment
 

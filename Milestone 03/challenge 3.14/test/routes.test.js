@@ -43,6 +43,16 @@ beforeEach(() => {
   calls.length = 0;
 });
 
+test('health endpoint responds without querying the database', async () => {
+  const response = await fetch(`${baseUrl}/health`);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.status, 'up');
+  assert.equal(typeof body.timestamp, 'string');
+  assert.equal(calls.length, 0);
+});
+
 test('event writes use the primary and return read-after-write guidance', async () => {
   const response = await fetch(`${baseUrl}/events`, {
     method: 'POST',

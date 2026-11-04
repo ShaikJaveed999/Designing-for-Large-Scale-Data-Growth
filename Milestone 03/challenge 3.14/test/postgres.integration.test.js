@@ -62,7 +62,7 @@ test('PostgreSQL schema partitions inserts and archives safely', async () => {
     const start = new Date(Date.UTC(insertedAt.getUTCFullYear(), insertedAt.getUTCMonth(), 1));
     const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
     const plan = await database.query(
-      'EXPLAIN (COSTS OFF) SELECT * FROM events WHERE created_at >= $1 AND created_at < $2',
+      'EXPLAIN (ANALYZE, BUFFERS, COSTS OFF) SELECT * FROM events WHERE created_at >= $1 AND created_at < $2',
       [start, end]
     );
     const planText = plan.rows.map((row) => row['QUERY PLAN']).join('\n');
